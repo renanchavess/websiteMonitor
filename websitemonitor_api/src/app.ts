@@ -1,7 +1,12 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import cron from 'node-cron';
+
 import siteRoute from './routes/site.route';
+import siteAviableHistoryRoute from './routes/siteAviableHistory.route';
+import monitorRoute from './routes/monitor.route';
+import monitorService from './service/monitor.service';
 
 export class App {
     private express: express.Application;
@@ -9,10 +14,12 @@ export class App {
 
     constructor() {
         this.express = express();
+        this.services();
         this.listen();
         this.database();
         this.middlewares();
         this.routes();
+        
     }
 
     public getApp(): express.Application {
@@ -21,6 +28,8 @@ export class App {
 
     private routes(): void {
         this.express.use('/site', siteRoute);
+        this.express.use('/site/aviablehistory', siteAviableHistoryRoute);
+        this.express.use('/monitor', monitorRoute);
     }
 
     private middlewares(): void {
@@ -32,6 +41,10 @@ export class App {
         this.express.listen(this.porta, () => {
             console.log('Servidor iniciado na porta ' + this.porta);
         });
+    }
+
+    private services() {
+        cron.schedule("* * * * *", monitorService.checkAvailability);
     }
 
     private database(): void {
